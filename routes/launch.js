@@ -13,8 +13,23 @@ exports.launch = (req, res, next) => {
       clientId: "smart-meds-checker",
       redirectUri: "/callback",
 
-      // TODO 1: Configure the SMART scopes (SOLVED)
-      scope: "launch openid fhirUser patient/Patient.read patient/MedicationRequest.read patient/AllergyIntolerance.read",
+      // ---------------------------------------------------------------
+      // TODO 1: Configure the SMART scopes
+      //
+      // The app needs to:
+      //   - Be launched in an EHR context (launch)
+      //   - Read the logged-in user's identity (openid, fhirUser)
+      //   - Read the Patient resource
+      //   - Read MedicationRequest resources
+      //   - Read AllergyIntolerance resources
+      //
+      // HINT: Scopes are space-separated. Resource scopes follow the
+      //       pattern "patient/<ResourceType>.read"
+      //       e.g. "patient/Observation.read"
+      //
+      // Replace the empty string below with the correct scopes:
+      // ---------------------------------------------------------------
+      scope: "",
     })
     .catch(next);
 };
@@ -27,7 +42,7 @@ exports.launch = (req, res, next) => {
  */
 exports.callback = (req, res, next) => {
   smart(req, res)
-    .completeAuth()
+    .ready()
     .then(() => {
       res.redirect("/dashboard");
     })
