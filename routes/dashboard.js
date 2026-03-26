@@ -1,7 +1,7 @@
 const smart = require("fhirclient/lib/entry/node");
 const fetch = require("node-fetch");
 const { parseScopes, hasScope } = require("../lib/scope-guard");
-const { ensurePatientData } = require("../lib/ensure-test-data");
+
 
 // The terminology server to use for ECL queries and $validate-code
 const TX_SERVER = "https://tx.training.hl7.org.au/fhir";
@@ -31,9 +31,6 @@ exports.dashboard = async (req, res, next) => {
     console.log(`[dashboard] FHIR server: ${client.state.serverUrl}`);
     console.log(`[dashboard] Granted scopes: ${client.state.tokenResponse?.scope}`);
 
-    // --- Infrastructure: inject AU test data for the launched patient if missing ---
-    // (Not part of the exercise — runs silently before student code)
-    await ensurePatientData(patientId);
 
     // =============================================================
     // STEP 1: Read Patient demographics (pre-built)
@@ -108,14 +105,17 @@ exports.dashboard = async (req, res, next) => {
       // medication using ECL dot notation to traverse relationships.
       //
       // The SNOMED attribute for "has active ingredient" is 127489000.
-      // The ECL pattern is:  {medicationCode}.127489000
+      // Some medications use a more precise sub-attribute (762949000).
+      // Using << 127489000 catches both.
+      //
+      // The ECL pattern is:  {medicationCode}.<< 127489000
       //
       // Fill in the ECL expression below. The variable `code` contains
       // the medication's SNOMED/AMT code.
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = `${code}.127489000`; // <-- e.g. `${code}.127489000`
+      const INGREDIENT_ECL = `${code}.<< 127489000`; // <-- e.g. `${code}.<< 127489000`
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
