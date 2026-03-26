@@ -1,7 +1,7 @@
 const smart = require("fhirclient/lib/entry/node");
 const fetch = require("node-fetch");
 const { parseScopes, hasScope } = require("../lib/scope-guard");
-const { ensureTestData } = require("../lib/ensure-test-data");
+const { getTrainingPatientId } = require("../lib/ensure-test-data");
 
 // The terminology server to use for ECL queries and $validate-code
 const TX_SERVER = "https://tx.training.hl7.org.au/fhir";
@@ -26,11 +26,10 @@ exports.dashboard = async (req, res, next) => {
       client.state.tokenResponse?.scope || ""
     );
 
-    // --- Infrastructure: ensure our training patient exists with AU data ---
-    // (Not part of the exercise — this runs silently before the student code)
-    // Returns the patient ID of the training patient (Li Wang), which may
-    // differ from the SMART launch patient if the server was reset.
-    const patientId = await ensureTestData(client);
+    // --- Infrastructure: use the training patient (Li Wang) ---
+    // The app always uses the training patient regardless of which patient
+    // was selected in the launcher. The training data was set up at app startup.
+    const patientId = (await getTrainingPatientId()) || client.patient.id;
 
     // =============================================================
     // STEP 1: Read Patient demographics (pre-built)
