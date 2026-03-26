@@ -1,7 +1,7 @@
 const smart = require("fhirclient/lib/entry/node");
 const fetch = require("node-fetch");
 const { parseScopes, hasScope } = require("../lib/scope-guard");
-const { getTrainingPatientId } = require("../lib/ensure-test-data");
+const { ensurePatientData } = require("../lib/ensure-test-data");
 
 // The terminology server to use for ECL queries and $validate-code
 const TX_SERVER = "https://tx.training.hl7.org.au/fhir";
@@ -26,10 +26,14 @@ exports.dashboard = async (req, res, next) => {
       client.state.tokenResponse?.scope || ""
     );
 
-    // --- Infrastructure: use the training patient (Li Wang) ---
-    // The app always uses the training patient regardless of which patient
-    // was selected in the launcher. The training data was set up at app startup.
-    const patientId = (await getTrainingPatientId()) || client.patient.id;
+    const patientId = client.patient.id;
+    console.log(`[dashboard] Patient ID: ${patientId}`);
+    console.log(`[dashboard] FHIR server: ${client.state.serverUrl}`);
+    console.log(`[dashboard] Granted scopes: ${client.state.tokenResponse?.scope}`);
+
+    // --- Infrastructure: inject AU test data for the launched patient if missing ---
+    // (Not part of the exercise — runs silently before student code)
+    await ensurePatientData(patientId);
 
     // =============================================================
     // STEP 1: Read Patient demographics (pre-built)
@@ -55,11 +59,12 @@ exports.dashboard = async (req, res, next) => {
       // active medications?
       //
       // HINT: The resource type is MedicationRequest. You need to
-      //       filter by patient and by status.
+      //       filter by patient and by status. The patient ID is
+      //       available as the variable: patientId
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const MEDICATION_QUERY = ""; // <-- e.g. "MedicationRequest?patient=..."
+      const MEDICATION_QUERY = ``; // <-- e.g. `MedicationRequest?patient=${patientId}&...`
       const medsBundle = await client.request(MEDICATION_QUERY);
       medications = (medsBundle.entry || []).map(e => e.resource);
     }
@@ -81,7 +86,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const ALLERGY_QUERY = ""; // <-- e.g. "AllergyIntolerance?patient=..."
+      const ALLERGY_QUERY = ``; // <-- e.g. `AllergyIntolerance?patient=${patientId}`
       const allergyBundle = await client.request(ALLERGY_QUERY);
       allergies = (allergyBundle.entry || []).map(e => e.resource);
     }
@@ -110,7 +115,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = ""; // <-- e.g. "${code}.127489000"
+      const INGREDIENT_ECL = ``; // <-- e.g. `${code}.127489000`
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
@@ -146,7 +151,7 @@ exports.dashboard = async (req, res, next) => {
           //
           // Fill in the ECL expression below:
           // -----------------------------------------------------------
-          const SUBSUMPTION_ECL = ""; // <-- e.g. "<< ${allergyCode}"
+          const SUBSUMPTION_ECL = ``; // <-- e.g. `<< ${allergyCode}`
           const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
             `url=` + encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${SUBSUMPTION_ECL}`) +
             `&system=http://snomed.info/sct` +
