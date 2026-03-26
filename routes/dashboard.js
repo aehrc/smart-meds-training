@@ -26,11 +26,11 @@ exports.dashboard = async (req, res, next) => {
       client.state.tokenResponse?.scope || ""
     );
 
-    const patientId = client.patient.id;
-
-    // --- Infrastructure: inject sample AU data if the server was cleared ---
+    // --- Infrastructure: ensure our training patient exists with AU data ---
     // (Not part of the exercise — this runs silently before the student code)
-    await ensureTestData(client);
+    // Returns the patient ID of the training patient (Li Wang), which may
+    // differ from the SMART launch patient if the server was reset.
+    const patientId = await ensureTestData(client);
 
     // =============================================================
     // STEP 1: Read Patient demographics (pre-built)
