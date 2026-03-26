@@ -1,7 +1,7 @@
 const smart = require("fhirclient/lib/entry/node");
 const fetch = require("node-fetch");
 const { parseScopes, hasScope } = require("../lib/scope-guard");
-const { ensureTestData } = require("../lib/ensure-test-data");
+const { getTrainingPatientId } = require("../lib/ensure-test-data");
 
 // The terminology server to use for ECL queries and $validate-code
 const TX_SERVER = "https://tx.training.hl7.org.au/fhir";
@@ -26,11 +26,10 @@ exports.dashboard = async (req, res, next) => {
       client.state.tokenResponse?.scope || ""
     );
 
-    // --- Infrastructure: ensure our training patient exists with AU data ---
-    // (Not part of the exercise — this runs silently before the student code)
-    // Returns the patient ID of the training patient (Li Wang), which may
-    // differ from the SMART launch patient if the server was reset.
-    const patientId = await ensureTestData(client);
+    // --- Infrastructure: use the training patient (Li Wang) ---
+    // The app always uses the training patient regardless of which patient
+    // was selected in the launcher. The training data was set up at app startup.
+    const patientId = (await getTrainingPatientId()) || client.patient.id;
 
     // =============================================================
     // STEP 1: Read Patient demographics (pre-built)
@@ -60,7 +59,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const MEDICATION_QUERY = `MedicationRequest?patient=${patientId}&status=active`; // SOLVED
+      const MEDICATION_QUERY = ""; // <-- e.g. "MedicationRequest?patient=..."
       const medsBundle = await client.request(MEDICATION_QUERY);
       medications = (medsBundle.entry || []).map(e => e.resource);
     }
@@ -82,7 +81,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const ALLERGY_QUERY = `AllergyIntolerance?patient=${patientId}`; // SOLVED
+      const ALLERGY_QUERY = ""; // <-- e.g. "AllergyIntolerance?patient=..."
       const allergyBundle = await client.request(ALLERGY_QUERY);
       allergies = (allergyBundle.entry || []).map(e => e.resource);
     }
@@ -111,7 +110,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = `${code}.127489000`; // SOLVED
+      const INGREDIENT_ECL = ""; // <-- e.g. "${code}.127489000"
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
@@ -120,7 +119,7 @@ exports.dashboard = async (req, res, next) => {
       const valueSet = await txResponse.json();
       // The ingredients are in the expansion — what path gets us
       // the list of concepts?
-      med._ingredients = (valueSet.expansion?.contains || []); // SOLVED
+      med._ingredients = []; // <-- TODO 4b: Replace with the path into valueSet that gets the concepts
     }
 
     // =============================================================
@@ -150,7 +149,7 @@ exports.dashboard = async (req, res, next) => {
           // Fill in the ECL expression and the path to get the boolean
           // result from the Parameters response:
           // -----------------------------------------------------------
-          const SUBSUMPTION_ECL = `<< ${allergyCode}`; // SOLVED
+          const SUBSUMPTION_ECL = ""; // <-- e.g. "<< ${allergyCode}"
           const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
             `url=` + encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${SUBSUMPTION_ECL}`) +
             `&system=http://snomed.info/sct` +
@@ -161,7 +160,7 @@ exports.dashboard = async (req, res, next) => {
           const checkResult = await checkResponse.json();
           // The result is a Parameters resource. The "result" parameter
           // contains a boolean. What path gets us that boolean?
-          const isContraindicated = checkResult.parameter?.find(p => p.name === "result")?.valueBoolean === true; // SOLVED
+          const isContraindicated = false; // <-- TODO 5b: Replace with the path into checkResult
           if (isContraindicated) {
             contraindications.push({
               medication: getMedicationDisplay(med),
