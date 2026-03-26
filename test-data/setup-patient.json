@@ -210,24 +210,15 @@
         "resourceType": "MedicationRequest",
         "status": "active",
         "intent": "order",
-        "contained": [
-          {
-            "resourceType": "Medication",
-            "id": "med-reaptan",
-            "code": {
-              "coding": [
-                {
-                  "system": "http://snomed.info/sct",
-                  "code": "926213011000036100",
-                  "display": "Reaptan 10/10 (perindopril arginine 10 mg + amlodipine 10 mg) tablet"
-                }
-              ],
-              "text": "Reaptan 10/10 (perindopril arginine 10 mg + amlodipine 10 mg) tablet"
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "925679011000036105",
+              "display": "Reaptan 10 mg/10 mg (perindopril arginine/amlodipine) tablet"
             }
-          }
-        ],
-        "medicationReference": {
-          "reference": "#med-reaptan"
+          ],
+          "text": "Reaptan 10/10 (perindopril/amlodipine) tablet"
         },
         "subject": {
           "reference": "urn:uuid:patient-li-wang"
