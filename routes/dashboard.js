@@ -59,7 +59,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const MEDICATION_QUERY = ""; // <-- e.g. "MedicationRequest?patient=..."
+      const MEDICATION_QUERY = `MedicationRequest?patient=${patientId}&status=active`; // SOLVED
       const medsBundle = await client.request(MEDICATION_QUERY);
       medications = (medsBundle.entry || []).map(e => e.resource);
     }
@@ -81,7 +81,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string below with the FHIR search path:
       // -------------------------------------------------------------
-      const ALLERGY_QUERY = ""; // <-- e.g. "AllergyIntolerance?patient=..."
+      const ALLERGY_QUERY = `AllergyIntolerance?patient=${patientId}`; // SOLVED
       const allergyBundle = await client.request(ALLERGY_QUERY);
       allergies = (allergyBundle.entry || []).map(e => e.resource);
     }
@@ -92,7 +92,7 @@ exports.dashboard = async (req, res, next) => {
     for (const med of medications) {
       const code = getMedicationCode(med);
       if (!code) {
-        med._ingredients = [];
+        med._ingredients = (valueSet.expansion?.contains || []);
         continue;
       }
 
@@ -110,7 +110,7 @@ exports.dashboard = async (req, res, next) => {
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = ""; // <-- e.g. "${code}.127489000"
+      const INGREDIENT_ECL = `${code}.127489000`; // SOLVED
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
@@ -119,7 +119,7 @@ exports.dashboard = async (req, res, next) => {
       const valueSet = await txResponse.json();
       // The ingredients are in the expansion — what path gets us
       // the list of concepts?
-      med._ingredients = []; // <-- TODO 4b: Replace with the path into valueSet that gets the concepts
+      med._ingredients = (valueSet.expansion?.contains || []); // <-- SOLVED
     }
 
     // =============================================================
@@ -149,7 +149,7 @@ exports.dashboard = async (req, res, next) => {
           // Fill in the ECL expression and the path to get the boolean
           // result from the Parameters response:
           // -----------------------------------------------------------
-          const SUBSUMPTION_ECL = ""; // <-- e.g. "<< ${allergyCode}"
+          const SUBSUMPTION_ECL = `<< ${allergyCode}`; // SOLVED
           const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
             `url=` + encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${SUBSUMPTION_ECL}`) +
             `&system=http://snomed.info/sct` +
@@ -160,7 +160,7 @@ exports.dashboard = async (req, res, next) => {
           const checkResult = await checkResponse.json();
           // The result is a Parameters resource. The "result" parameter
           // contains a boolean. What path gets us that boolean?
-          const isContraindicated = false; // <-- TODO 5b: Replace with the path into checkResult
+          const isContraindicated = checkResult.parameter?.find(p => p.name === "result")?.valueBoolean === true; // SOLVED
           if (isContraindicated) {
             contraindications.push({
               medication: getMedicationDisplay(med),
