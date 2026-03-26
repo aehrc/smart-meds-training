@@ -49,22 +49,9 @@ exports.dashboard = async (req, res, next) => {
     if (!hasScope(grantedScopes, "MedicationRequest", "read")) {
       medsError = "Scope not granted: patient/MedicationRequest.read";
     } else {
-      // -------------------------------------------------------------
-      // TODO 2: Fetch the patient's active MedicationRequests
-      //
-      // Use client.request() to query for MedicationRequest resources
-      // for this patient, filtered to active status.
-      //
-      // HINT: The FHIR search URL pattern is:
-      //   "MedicationRequest?patient={patientId}&status=active"
-      //
-      // The result is a FHIR Bundle. Extract the entries with:
-      //   const bundle = await client.request("...");
-      //   medications = (bundle.entry || []).map(e => e.resource);
-      //
-      // Replace the line below with your implementation:
-      // -------------------------------------------------------------
-      medications = []; // <-- Replace this
+      // TODO 2: Fetch the patient's active MedicationRequests (SOLVED)
+      const medsBundle = await client.request(`MedicationRequest?patient=${patientId}&status=active`);
+      medications = (medsBundle.entry || []).map(e => e.resource);
     }
 
     // =============================================================
@@ -76,22 +63,9 @@ exports.dashboard = async (req, res, next) => {
     if (!hasScope(grantedScopes, "AllergyIntolerance", "read")) {
       allergiesError = "Scope not granted: patient/AllergyIntolerance.read";
     } else {
-      // -------------------------------------------------------------
-      // TODO 3: Fetch the patient's AllergyIntolerances
-      //
-      // Use client.request() to query for AllergyIntolerance resources
-      // for this patient.
-      //
-      // HINT: The FHIR search URL pattern is:
-      //   "AllergyIntolerance?patient={patientId}"
-      //
-      // Extract entries the same way as TODO 2:
-      //   const bundle = await client.request("...");
-      //   allergies = (bundle.entry || []).map(e => e.resource);
-      //
-      // Replace the line below with your implementation:
-      // -------------------------------------------------------------
-      allergies = []; // <-- Replace this
+      // TODO 3: Fetch the patient's AllergyIntolerances (SOLVED)
+      const allergyBundle = await client.request(`AllergyIntolerance?patient=${patientId}`);
+      allergies = (allergyBundle.entry || []).map(e => e.resource);
     }
 
     // =============================================================
@@ -104,31 +78,14 @@ exports.dashboard = async (req, res, next) => {
         continue;
       }
 
-      // -------------------------------------------------------------
-      // TODO 4: Get the active ingredients of this medication
-      //
-      // Use the terminology server to expand an ECL expression that
-      // retrieves the active ingredients of the medication.
-      //
-      // The ECL attribute traversal pattern is:
-      //   {medicationCode}.127489000
-      // where 127489000 is the "has active ingredient" attribute.
-      //
-      // Call ValueSet/$expand on the terminology server:
-      //   GET {TX_SERVER}/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/{code}.127489000
-      //
-      // HINT: Use fetch() (already imported) to call the terminology server:
-      //   const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
-      //     encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${code}.127489000`);
-      //   const txResponse = await fetch(txUrl, {
-      //     headers: { Accept: "application/fhir+json" }
-      //   });
-      //   const valueSet = await txResponse.json();
-      //   med._ingredients = (valueSet.expansion?.contains || []);
-      //
-      // Replace the line below with your implementation:
-      // -------------------------------------------------------------
-      med._ingredients = []; // <-- Replace this
+      // TODO 4: Get the active ingredients of this medication (SOLVED)
+      const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
+        encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${code}.127489000`);
+      const txResponse = await fetch(txUrl, {
+        headers: { Accept: "application/fhir+json" }
+      });
+      const valueSet = await txResponse.json();
+      med._ingredients = (valueSet.expansion?.contains || []);
     }
 
     // =============================================================
@@ -142,43 +99,18 @@ exports.dashboard = async (req, res, next) => {
           const allergyCode = getAllergyCode(allergy);
           if (!allergyCode) continue;
 
-          // -----------------------------------------------------------
-          // TODO 5: Check if the ingredient is a kind of the allergy substance
-          //
-          // Use $validate-code on the terminology server to check if the
-          // ingredient code is a member of the ValueSet defined by the ECL:
-          //   << {allergyCode}
-          // (i.e., the allergy substance or any of its descendants)
-          //
-          // The $validate-code call checks: "Is ingredient X a type of
-          // allergy substance Y (or any of its subtypes)?"
-          //
-          // HINT: Build the URL like this:
-          //   const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
-          //     `url=` + encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/<< ${allergyCode}`) +
-          //     `&system=http://snomed.info/sct` +
-          //     `&code=${ingredient.code}`;
-          //   const checkResponse = await fetch(checkUrl, {
-          //     headers: { Accept: "application/fhir+json" }
-          //   });
-          //   const result = await checkResponse.json();
-          //   const isContraindicated = result.parameter?.find(
-          //     p => p.name === "result"
-          //   )?.valueBoolean === true;
-          //
-          // If isContraindicated is true, push to the contraindications array:
-          //   contraindications.push({
-          //     medication: getMedicationDisplay(med),
-          //     medicationCode: getMedicationCode(med),
-          //     ingredient: ingredient.display,
-          //     ingredientCode: ingredient.code,
-          //     allergy: getAllergyDisplay(allergy),
-          //     allergyCode: allergyCode,
-          //   });
-          //
-          // Replace the block below with your implementation:
-          // -----------------------------------------------------------
-          const isContraindicated = false; // <-- Replace this
+          // TODO 5: Check if the ingredient is a kind of the allergy substance (SOLVED)
+          const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
+            `url=` + encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/<< ${allergyCode}`) +
+            `&system=http://snomed.info/sct` +
+            `&code=${ingredient.code}`;
+          const checkResponse = await fetch(checkUrl, {
+            headers: { Accept: "application/fhir+json" }
+          });
+          const result = await checkResponse.json();
+          const isContraindicated = result.parameter?.find(
+            p => p.name === "result"
+          )?.valueBoolean === true;
           if (isContraindicated) {
             contraindications.push({
               medication: getMedicationDisplay(med),
