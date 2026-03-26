@@ -42,7 +42,7 @@ exports.launch = (req, res, next) => {
  */
 exports.callback = (req, res, next) => {
   smart(req, res)
-    .completeAuth()
+    .ready()
     .then(() => {
       res.redirect("/dashboard");
     })
