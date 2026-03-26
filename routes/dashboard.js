@@ -104,18 +104,18 @@ exports.dashboard = async (req, res, next) => {
       // The terminology server can find the active ingredients of a
       // medication using ECL dot notation to traverse relationships.
       //
-      // The SNOMED attribute for "has active ingredient" is 127489000.
-      // Some medications use a more precise sub-attribute (762949000).
-      // Using << 127489000 catches both.
+      // The SNOMED attribute 762951001 is the parent of all ingredient
+      // relationship types (has active ingredient, has precise active
+      // ingredient, etc). Using << 762951001 catches them all.
       //
-      // The ECL pattern is:  {medicationCode}.<< 127489000
+      // The ECL pattern is:  {medicationCode}.<< 762951001
       //
       // Fill in the ECL expression below. The variable `code` contains
       // the medication's SNOMED/AMT code.
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = `${code}.<< 127489000`; // <-- e.g. `${code}.<< 127489000`
+      const INGREDIENT_ECL = `${code}.<< 762951001`; // <-- e.g. `${code}.<< 762951001`
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
