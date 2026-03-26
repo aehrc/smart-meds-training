@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard &mdash; Medication Contraindication Checker</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Medication Contraindication Checker</h1>
+      <span class="badge">SMART-on-FHIR Training</span>
+    </div>
+  </header>
+
+  <!-- ============================================================= -->
+  <!-- Patient Banner                                                 -->
+  <!-- ============================================================= -->
+  <div class="patient-banner">
+    <% if (patient) { %>
+      <div class="patient-info">
+        <span class="patient-name">
+          <%= patient.name?.[0]?.text
+              || [patient.name?.[0]?.given?.join(" "), patient.name?.[0]?.family].filter(Boolean).join(" ")
+              || "Unknown" %>
+        </span>
+        <span class="patient-details">
+          <% if (patient.birthDate) { %>
+            DOB: <%= patient.birthDate %> &bull;
+          <% } %>
+          <% if (patient.gender) { %>
+            Gender: <%= patient.gender %> &bull;
+          <% } %>
+          ID: <%= patient.id %>
+        </span>
+      </div>
+    <% } else { %>
+      <div class="patient-info">
+        <span class="patient-name">Patient data unavailable</span>
+        <span class="patient-details">Check that patient/Patient.read scope is granted</span>
+      </div>
+    <% } %>
+  </div>
+
+  <main class="dashboard">
+    <!-- =========================================================== -->
+    <!-- Contraindications Panel                                      -->
+    <!-- =========================================================== -->
+    <% if (contraindications.length > 0) { %>
+    <div class="card contraindication-card">
+      <h2>Contraindications Detected</h2>
+      <div class="alert alert-danger">
+        <strong>Warning:</strong> The following medication-allergy conflicts were found.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Medication</th>
+            <th>Ingredient</th>
+            <th>Conflicts With Allergy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const c of contraindications) { %>
+          <tr>
+            <td>
+              <strong><%= c.medication %></strong>
+              <br /><small class="code-label">SCTID: <%= c.medicationCode %></small>
+            </td>
+            <td>
+              <%= c.ingredient %>
+              <br /><small class="code-label">SCTID: <%= c.ingredientCode %></small>
+            </td>
+            <td>
+              <%= c.allergy %>
+              <br /><small class="code-label">SCTID: <%= c.allergyCode %></small>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="card safe-card">
+      <h2>Contraindication Check</h2>
+      <div class="alert alert-success">
+        No contraindications detected.
+        <% if (medications.length === 0 && allergies.length === 0) { %>
+          <br /><small>No medications or allergies loaded &mdash; have you completed the TODOs?</small>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="two-col">
+      <!-- ========================================================= -->
+      <!-- Medications Panel                                          -->
+      <!-- ========================================================= -->
+      <div class="card">
+        <h2>Active Medications</h2>
+        <% if (medsError) { %>
+          <div class="alert alert-warning"><%= medsError %></div>
+        <% } else if (medications.length === 0) { %>
+          <p class="empty">No active medications found.</p>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr>
+                <th>Medication</th>
+                <th>Code</th>
+                <th>Ingredients</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const med of medications) {
+                const isContraindicated = contraindications.some(
+                  c => c.medicationCode === getMedicationCode(med)
+                );
+              %>
+              <tr class="<%= isContraindicated ? 'row-danger' : '' %>">
+                <td>
+                  <strong><%= getMedicationDisplay(med) %></strong>
+                  <% if (isContraindicated) { %>
+                    <span class="badge badge-danger">CONTRAINDICATED</span>
+                  <% } %>
+                </td>
+                <td><small class="code-label"><%= getMedicationCode(med) || 'N/A' %></small></td>
+                <td>
+                  <% if (med._ingredients && med._ingredients.length > 0) { %>
+                    <ul class="ingredient-list">
+                      <% for (const ing of med._ingredients) { %>
+                        <li>
+                          <%= ing.display %>
+                          <small class="code-label">(<%= ing.code %>)</small>
+                        </li>
+                      <% } %>
+                    </ul>
+                  <% } else { %>
+                    <small class="empty">No ingredients resolved</small>
+                  <% } %>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Allergies Panel                                            -->
+      <!-- ========================================================= -->
+      <div class="card">
+        <h2>Allergies</h2>
+        <% if (allergiesError) { %>
+          <div class="alert alert-warning"><%= allergiesError %></div>
+        <% } else if (allergies.length === 0) { %>
+          <p class="empty">No allergies recorded.</p>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr>
+                <th>Substance</th>
+                <th>Code</th>
+                <th>Criticality</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const a of allergies) { %>
+              <tr>
+                <td><strong><%= getAllergyDisplay(a) %></strong></td>
+                <td><small class="code-label"><%= getAllergyCode(a) || 'N/A' %></small></td>
+                <td>
+                  <% if (a.criticality === 'high') { %>
+                    <span class="badge badge-danger">High</span>
+                  <% } else if (a.criticality === 'low') { %>
+                    <span class="badge badge-info">Low</span>
+                  <% } else { %>
+                    <span class="badge"><%= a.criticality || 'Unknown' %></span>
+                  <% } %>
+                </td>
+                <td><%= a.clinicalStatus?.coding?.[0]?.code || 'Unknown' %></td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- Scopes Panel (debug info)                                    -->
+    <!-- =========================================================== -->
+    <div class="card scopes-card">
+      <h2>Granted Scopes</h2>
+      <div class="scope-list">
+        <% if (grantedScopes.length === 0) { %>
+          <span class="empty">No scopes returned in token response.</span>
+        <% } else { %>
+          <% for (const s of grantedScopes) { %>
+            <span class="scope-badge"><%= s %></span>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Developer Training Exercise &mdash; FHIR R4 + SNOMED CT</p>
+  </footer>
+</body>
+</html>

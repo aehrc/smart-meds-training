@@ -1,0 +1,20 @@
+{
+  "name": "smart-meds-contraindication-checker",
+  "version": "1.0.0",
+  "description": "SMART-on-FHIR Medication Contraindication Checker - Developer Training Exercise",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "ejs": "^3.1.9",
+    "fhirclient": "^2.5.3",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

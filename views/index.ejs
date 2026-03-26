@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medication Contraindication Checker</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Medication Contraindication Checker</h1>
+      <span class="badge">SMART-on-FHIR Training</span>
+    </div>
+  </header>
+
+  <main class="landing">
+    <div class="card hero-card">
+      <h2>Welcome</h2>
+      <p>
+        This app demonstrates a <strong>SMART-on-FHIR</strong> launch flow
+        combined with <strong>SNOMED CT terminology queries</strong> to detect
+        medication contraindications based on a patient's allergies.
+      </p>
+
+      <div class="how-it-works">
+        <h3>How it works</h3>
+        <ol>
+          <li>Launch from an EHR or the <a href="https://launch.smarthealthit.org" target="_blank">SMART Launcher</a></li>
+          <li>Retrieve the patient's medications and allergies via FHIR</li>
+          <li>Extract active ingredients using SNOMED CT ECL on a terminology server</li>
+          <li>Check each ingredient against each allergy using <code>$validate-code</code></li>
+          <li>Display any detected contraindications</li>
+        </ol>
+      </div>
+
+      <div class="launch-instructions">
+        <h3>Launch Instructions</h3>
+        <p>To test this app:</p>
+        <ol>
+          <li>Go to <a href="https://launch.smarthealthit.org" target="_blank">launch.smarthealthit.org</a></li>
+          <li>Set the <strong>App Launch URL</strong> to: <code id="launch-url"></code></li>
+          <li>Select a patient (or use the test patient you created)</li>
+          <li>Click <strong>Launch</strong></li>
+        </ol>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Developer Training Exercise &mdash; FHIR R4 + SNOMED CT</p>
+  </footer>
+
+  <script>
+    // Display the launch URL dynamically based on current host
+    document.getElementById("launch-url").textContent =
+      window.location.origin + "/launch";
+  </script>
+</body>
+</html>

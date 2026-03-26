@@ -1,0 +1,248 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:patient-li-wang",
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR"
+                }
+              ]
+            },
+            "system": "http://example.org/fhir/mrn",
+            "value": "SMART-TRAINING-001"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "official",
+            "family": "Wang",
+            "given": ["Li"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1980-06-15",
+        "address": [
+          {
+            "use": "home",
+            "line": ["29 Shortland Street"],
+            "city": "Sydney",
+            "state": "NSW",
+            "postalCode": "2000",
+            "country": "AU"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Patient"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:allergy-penicillin",
+      "resource": {
+        "resourceType": "AllergyIntolerance",
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+              "code": "confirmed",
+              "display": "Confirmed"
+            }
+          ]
+        },
+        "type": "allergy",
+        "category": ["medication"],
+        "criticality": "high",
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "764146007",
+              "display": "Penicillin"
+            }
+          ],
+          "text": "Penicillin"
+        },
+        "patient": {
+          "reference": "urn:uuid:patient-li-wang"
+        },
+        "recordedDate": "2015-03-10",
+        "reaction": [
+          {
+            "substance": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "764146007",
+                  "display": "Penicillin"
+                }
+              ]
+            },
+            "manifestation": [
+              {
+                "coding": [
+                  {
+                    "system": "http://snomed.info/sct",
+                    "code": "39579001",
+                    "display": "Anaphylaxis"
+                  }
+                ]
+              }
+            ],
+            "severity": "severe"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "AllergyIntolerance"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:medrq-amoxicillin",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "23551011000036108",
+              "display": "Amoxicillin 500 mg capsule"
+            }
+          ],
+          "text": "Amoxicillin 500 mg capsule"
+        },
+        "subject": {
+          "reference": "urn:uuid:patient-li-wang"
+        },
+        "authoredOn": "2024-11-01",
+        "dosageInstruction": [
+          {
+            "text": "1 capsule three times daily",
+            "timing": {
+              "repeat": {
+                "frequency": 3,
+                "period": 1,
+                "periodUnit": "d"
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "capsule",
+                  "system": "http://snomed.info/sct",
+                  "code": "732937005"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:medrq-paracetamol-codeine",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "79115011000036100",
+              "display": "Panadeine Forte (paracetamol 500 mg + codeine 30 mg) tablet"
+            }
+          ],
+          "text": "Panadeine Forte (paracetamol 500 mg + codeine 30 mg) tablet"
+        },
+        "subject": {
+          "reference": "urn:uuid:patient-li-wang"
+        },
+        "authoredOn": "2024-10-15",
+        "dosageInstruction": [
+          {
+            "text": "1-2 tablets every 4-6 hours as needed",
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "frequencyMax": 2,
+                "period": 4,
+                "periodMax": 6,
+                "periodUnit": "h"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:medrq-reaptan",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "status": "active",
+        "intent": "order",
+        "contained": [
+          {
+            "resourceType": "Medication",
+            "id": "med-reaptan",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "926213011000036100",
+                  "display": "Reaptan 10/10 (perindopril arginine 10 mg + amlodipine 10 mg) tablet"
+                }
+              ],
+              "text": "Reaptan 10/10 (perindopril arginine 10 mg + amlodipine 10 mg) tablet"
+            }
+          }
+        ],
+        "medicationReference": {
+          "reference": "#med-reaptan"
+        },
+        "subject": {
+          "reference": "urn:uuid:patient-li-wang"
+        },
+        "authoredOn": "2024-09-01",
+        "dosageInstruction": [
+          {
+            "text": "1 tablet daily in the morning"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationRequest"
+      }
+    }
+  ]
+}
