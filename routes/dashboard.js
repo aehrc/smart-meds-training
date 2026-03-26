@@ -117,9 +117,7 @@ exports.dashboard = async (req, res, next) => {
         headers: { Accept: "application/fhir+json" }
       });
       const valueSet = await txResponse.json();
-      // The ingredients are in the expansion — what path gets us
-      // the list of concepts?
-      med._ingredients = []; // <-- TODO 4b: Replace with the path into valueSet that gets the concepts
+      med._ingredients = (valueSet.expansion?.contains || []);
     }
 
     // =============================================================
@@ -146,8 +144,7 @@ exports.dashboard = async (req, res, next) => {
           // The variable `allergyCode` has the allergy substance code.
           // The variable `ingredient.code` has the ingredient code.
           //
-          // Fill in the ECL expression and the path to get the boolean
-          // result from the Parameters response:
+          // Fill in the ECL expression below:
           // -----------------------------------------------------------
           const SUBSUMPTION_ECL = ""; // <-- e.g. "<< ${allergyCode}"
           const checkUrl = `${TX_SERVER}/ValueSet/$validate-code?` +
@@ -158,9 +155,9 @@ exports.dashboard = async (req, res, next) => {
             headers: { Accept: "application/fhir+json" }
           });
           const checkResult = await checkResponse.json();
-          // The result is a Parameters resource. The "result" parameter
-          // contains a boolean. What path gets us that boolean?
-          const isContraindicated = false; // <-- TODO 5b: Replace with the path into checkResult
+          const isContraindicated = checkResult.parameter?.find(
+            p => p.name === "result"
+          )?.valueBoolean === true;
           if (isContraindicated) {
             contraindications.push({
               medication: getMedicationDisplay(med),
