@@ -105,14 +105,17 @@ exports.dashboard = async (req, res, next) => {
       // medication using ECL dot notation to traverse relationships.
       //
       // The SNOMED attribute for "has active ingredient" is 127489000.
-      // The ECL pattern is:  {medicationCode}.127489000
+      // Some medications use a more precise sub-attribute (762949000).
+      // Using << 127489000 catches both.
+      //
+      // The ECL pattern is:  {medicationCode}.<< 127489000
       //
       // Fill in the ECL expression below. The variable `code` contains
       // the medication's SNOMED/AMT code.
       //
       // Replace the empty string with your ECL:
       // -------------------------------------------------------------
-      const INGREDIENT_ECL = ``; // <-- e.g. `${code}.127489000`
+      const INGREDIENT_ECL = ``; // <-- e.g. `${code}.<< 127489000`
       const txUrl = `${TX_SERVER}/ValueSet/$expand?url=` +
         encodeURIComponent(`http://snomed.info/sct?fhir_vs=ecl/${INGREDIENT_ECL}`);
       const txResponse = await fetch(txUrl, {
